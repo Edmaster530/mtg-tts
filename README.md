@@ -1,1 +1,1 @@
-# mtg-tts
+# Magic the Gathering and Table Top Simulator
