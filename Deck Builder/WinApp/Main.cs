@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -66,29 +67,59 @@ namespace WinApp
             var filename = $@"C:\Users\User\Desktop\deck_exported.jpg";
             var width = 223;
             var height = 321;
+            var rows = 6;
+            var columns = 10;
 
-            using var bitmap = new Bitmap(width * 10, height * chunks.Count);
+            using var bitmap = new Bitmap(width * columns, height * rows);
             using var template = Graphics.FromImage(bitmap);
-            for(var row = 0; row < 6; row++)
+            for(var row = 0; row < rows; row++)
             {
                 if (chunks.Count < row) continue;
                 // each list is a group of at most 10 cards
                 // we are going to assume at this time that we have at most 69 items
                 // i.e. "sunny day"
                 // first we create a temp file from the given url
-                for (var i = 0; i < chunks[row].Count; i++)
+                for (var i = 0; i < columns; i++)
                 {
                     var temp = System.IO.Path.GetTempFileName();
-                    using var client = new System.Net.WebClient();
-                    client.DownloadFile(chunks[row][i].ImageUrl.ToString(), temp);
+                    if (chunks[row].Count > i)
+                    {
+                        using var client = new System.Net.WebClient();
+                        client.DownloadFile(chunks[row][i].ImageUrl.ToString(), temp);
+                        ResizeJpg(temp, width, height);
+                    } else
+                    {
+                        using var hidden = new Bitmap(width, height);
+                        hidden.Save(temp);
+                    }
                     var image = Image.FromFile(temp);
                     template.DrawImage(image, new Point(i * width, row * height));
                 }
                 row++;  // we move to the next row
             }
             // we add the last hidden card sleeve
-            template.DrawImage(Image.FromFile(WinApp.Controls.Card.BlankCard), new Point(9*width, 6*height));
+            template.DrawImage(Image.FromFile(WinApp.Controls.Card.BlankCard), new Point((columns-1)*width, (rows-1)*height));
             bitmap.Save(filename);
         }
+        public static void ResizeJpg(string path, int nWidth, int nHeight)
+        {
+            using (var result = new Bitmap(nWidth, nHeight))
+            {
+                using (var input = new Bitmap(path))
+                {
+                    using (Graphics g = Graphics.FromImage(result))
+                    {
+                        g.DrawImage(input, 0, 0, nWidth, nHeight);
+                    }
+                }
+
+                var ici = ImageCodecInfo.GetImageEncoders().FirstOrDefault(ie => ie.MimeType == "image/jpeg");
+                var eps = new EncoderParameters(1);
+                eps.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 80L);
+                result.Save(path, ici, eps);
+            }
+        }
     }
+
+
 }
