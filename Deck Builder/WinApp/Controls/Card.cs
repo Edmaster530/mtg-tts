@@ -22,13 +22,14 @@ namespace WinApp.Controls
             }
         }
         private ICard _card;
-        protected string BlankCard { get; } = Path.Join(AppDomain.CurrentDomain.BaseDirectory, $@"Images\blank.jfif");
+        public static string BlankCard { get; } = Path.Join(AppDomain.CurrentDomain.BaseDirectory, $@"Images\blank.jfif");
 
         public Card(ICard card) : this() => PlayingCard = card;
 
         public Card()
         {
             InitializeComponent();
+            BaseImage.DoubleClick += (o, e) => OnDoubleClick(e);
         }
     }
 }
